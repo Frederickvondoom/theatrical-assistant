@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Send, Volume2, User, Bot } from 'lucide-react';
+import { Mic, Square, Send, Volume2, User, Bot, Theater } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -14,16 +14,30 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'system',
-      content: 'Whomp is a whitty French poet whose writing is a mix of Ocean Vuong and Charles Bernstein',
+      content: 'Whomp is a theatrical voice that embodies universal archetypes. They speak with dramatic flair, drawing from the Hero, the Trickster, the Sage, the Lover, and other timeless character types from world mythology and drama.',
       id: 'system-prompt'
     }
   ]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedArchetype, setSelectedArchetype] = useState('Hero');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const archetypes = [
+    'Hero', 
+    'Mentor', 
+    'Shadow', 
+    'Trickster', 
+    'Shapeshifter', 
+    'Guardian', 
+    'Herald', 
+    'Lover',
+    'Sage',
+    'Ruler'
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,7 +113,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ 
+          text,
+          voice: selectedArchetype.toLowerCase() 
+        }),
       });
 
       if (!response.ok) {
@@ -142,7 +159,8 @@ export default function Home() {
           messages: [...messages, userMessage].map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          archetype: selectedArchetype
         }),
       });
 
@@ -183,8 +201,25 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           <div className="h-[700px] flex flex-col">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h1 className="text-2xl font-semibold text-gray-800">AI Poet Chat</h1>
-              <p className="text-sm text-gray-600">Chat with Whomp, the French AI poet</p>
+              <h1 className="text-2xl font-semibold text-gray-800">Theatrical Archetype Chat</h1>
+              <p className="text-sm text-gray-600">Chat with Whomp, who speaks in universal archetypes</p>
+              <div className="mt-3">
+                <label htmlFor="archetype-select" className="text-sm font-medium text-gray-700">
+                  Choose an archetype:
+                </label>
+                <select
+                  id="archetype-select"
+                  value={selectedArchetype}
+                  onChange={(e) => setSelectedArchetype(e.target.value)}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                >
+                  {archetypes.map((archetype) => (
+                    <option key={archetype} value={archetype}>
+                      {archetype}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -196,8 +231,8 @@ export default function Home() {
                   }`}
                 >
                   {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Bot size={20} className="text-blue-600" />
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Bot size={20} className="text-purple-600" />
                     </div>
                   )}
                   
@@ -210,19 +245,25 @@ export default function Home() {
                       className={`rounded-2xl p-4 ${
                         message.role === 'user'
                           ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-purple-100 text-gray-800'
                       }`}
                     >
+                      {message.role === 'assistant' && (
+                        <div className="text-xs text-purple-700 font-semibold mb-1">
+                          {selectedArchetype} speaks:
+                        </div>
+                      )}
                       <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
                     
                     {message.role === 'assistant' && (
                       <button
                         onClick={() => speakText(message.content)}
-                        className="mt-2 text-gray-500 hover:text-gray-700 transition-colors"
+                        className="mt-2 text-purple-500 hover:text-purple-700 transition-colors flex items-center space-x-1"
                         aria-label="Text to speech"
                       >
                         <Volume2 size={16} />
+                        <span className="text-xs">Hear in {selectedArchetype} voice</span>
                       </button>
                     )}
                     
@@ -243,14 +284,14 @@ export default function Home() {
               
               {isLoading && (
                 <div className="flex justify-start items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Bot size={20} className="text-blue-600" />
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Bot size={20} className="text-purple-600" />
                   </div>
-                  <div className="bg-gray-100 rounded-2xl p-4">
+                  <div className="bg-purple-100 rounded-2xl p-4">
                     <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
                   </div>
                 </div>
@@ -264,8 +305,8 @@ export default function Home() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={`Ask the ${selectedArchetype} something...`}
+                  className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   disabled={isLoading}
                 />
                 <button
@@ -282,7 +323,7 @@ export default function Home() {
                 </button>
                 <button
                   type="submit"
-                  className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!input.trim() || isLoading}
                 >
                   <Send size={20} />
